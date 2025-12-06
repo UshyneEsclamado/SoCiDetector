@@ -1,0 +1,42 @@
+{
+  "name": "skyguardian-ai-electron",
+  "version": "1.0.0",
+  "description": "SkyGuardian AI - Aerial Threat Detection System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "author": "Your Team",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^28.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.skyguardian.ai",
+    "productName": "SkyGuardian AI",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "../frontend/dist/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "icon.png"
+    }
+  }
+}
