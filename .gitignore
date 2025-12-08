@@ -1,4 +1,38 @@
 # Python
+.venv/
+.venv311/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Flask uploads & logs
+backend/uploads/
+backend/*.log
+
+# Model weights (large files; store externally)
+backend/model/*.pt
+backend/model/*.onnx
+backend/model/*.pth
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Electron
+electron/node_modules/
+electron/dist/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+# Python
 backend/venv/
 backend/__pycache__/
 backend/*.pyc

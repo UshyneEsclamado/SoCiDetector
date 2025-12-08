@@ -24,9 +24,10 @@ function createWindow() {
   // In development, load from localhost:8080
   // In production, load from dist folder
   const isDev = process.env.NODE_ENV === 'development';
+  const devPort = process.env.FRONTEND_PORT || '8080';
   
   if (isDev) {
-    mainWindow.loadURL('http://localhost:8080');
+    mainWindow.loadURL(`http://localhost:${devPort}`);
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../frontend/dist/index.html'));
