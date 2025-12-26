@@ -4,11 +4,14 @@ import Header from './components/Header.vue'
 import DetectionPanel from './components/DetectionPanel.vue'
 import VideoPlayer from './components/VideoPlayer.vue'
 import Statistics from './components/Statistics.vue'
+import ResultHistory from './components/ResultHistory.vue'
 import api from './services/api'
 
 const backendStatus = ref({ connected: false, modelLoaded: false })
 const detections = ref([])
 const stats = ref({ total: 0, soldiers: 0, civilians: 0 })
+const sessionHistory = ref([])
+const selectedSessionId = ref('')
 
 async function refreshStatus() {
   try {
@@ -22,13 +25,46 @@ async function refreshStatus() {
   }
 }
 
-function onFrameDetected(newDetections) {
-  // Append and recompute simple stats
-  const stamped = newDetections.map((d, idx) => ({ id: Date.now() + '-' + idx, ...d }))
-  detections.value = [...stamped, ...detections.value].slice(0, 50)
-  const total = detections.value.length
-  const soldiers = detections.value.filter(d => String(d.class).toLowerCase().includes('soldier')).length
-  const civilians = detections.value.filter(d => String(d.class).toLowerCase().includes('civilian')).length
+function onFrameDetected(sessionPayload) {
+  if (!sessionPayload) return
+  const normalizedDetections = (sessionPayload.detections || []).map((d, idx) => ({
+    id: `${sessionPayload.sessionId}-${idx}`,
+    ...d
+  }))
+
+  const session = {
+    id: sessionPayload.sessionId,
+    fileName: sessionPayload.fileName,
+    timestamp: sessionPayload.timestamp,
+    sourceImage: sessionPayload.sourceImage,
+    annotatedImage: sessionPayload.annotatedImage,
+    detections: normalizedDetections
+  }
+
+  const existingIndex = sessionHistory.value.findIndex(s => s.id === session.id)
+  if (existingIndex !== -1) {
+    sessionHistory.value.splice(existingIndex, 1)
+  }
+  sessionHistory.value = [session, ...sessionHistory.value].slice(0, 20)
+  selectSession(session.id)
+}
+
+function selectSession(sessionId) {
+  if (!sessionId) {
+    selectedSessionId.value = ''
+    applyDetections([])
+    return
+  }
+  selectedSessionId.value = sessionId
+  const session = sessionHistory.value.find(s => s.id === sessionId)
+  applyDetections(session ? session.detections : [])
+}
+
+function applyDetections(list) {
+  detections.value = list
+  const total = list.length
+  const soldiers = list.filter(d => String(d.class).toLowerCase().includes('soldier')).length
+  const civilians = list.filter(d => String(d.class).toLowerCase().includes('civilian')).length
   stats.value = { total, soldiers, civilians }
 }
 
@@ -45,6 +81,11 @@ onMounted(() => {
         <VideoPlayer :backend-connected="backendStatus.connected" @frame-detected="onFrameDetected" />
       </section>
       <section class="right">
+        <ResultHistory
+          :sessions="sessionHistory"
+          :selected-id="selectedSessionId"
+          @select-session="selectSession"
+        />
         <DetectionPanel :detections="detections" />
         <Statistics :stats="stats" />
       </section>
@@ -58,6 +99,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: linear-gradient(145deg, rgba(7, 24, 46, 0.85), rgba(2, 8, 16, 0.95));
 }
 .content {
   display: grid;
@@ -66,9 +108,10 @@ onMounted(() => {
   padding: 16px;
 }
 .left, .right { 
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 20px 40px rgba(3, 10, 20, 0.55);
 }
 </style>

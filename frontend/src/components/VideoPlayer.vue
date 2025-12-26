@@ -90,6 +90,9 @@ export default {
       fps: 0,
       lastFrameTime: 0,
       isImage: false,
+      currentSessionId: null,
+      currentFileName: '',
+      lastSourceFrame: null,
     };
   },
   mounted() {
@@ -105,6 +108,10 @@ export default {
 
       const fileType = file.type;
       this.isImage = fileType.startsWith('image/');
+      this.currentSessionId = this.generateSessionId();
+      this.currentFileName = file.name || (this.isImage ? 'Image Upload' : 'Video Upload');
+      this.currentFrame = 0;
+      this.totalFrames = 0;
 
       const url = URL.createObjectURL(file);
 
@@ -120,6 +127,7 @@ export default {
             width: img.width,
             height: img.height,
           };
+          this.lastSourceFrame = this.canvas.toDataURL('image/jpeg', 0.85);
           
           URL.revokeObjectURL(url);
         };
@@ -140,6 +148,7 @@ export default {
             height: this.video.videoHeight,
             duration: this.video.duration,
           };
+          this.lastSourceFrame = this.canvas.toDataURL('image/jpeg', 0.85);
         });
       }
     },
@@ -195,6 +204,7 @@ export default {
         
         // Get frame as base64
         const frameData = this.canvas.toDataURL('image/jpeg', 0.8);
+        this.lastSourceFrame = frameData;
         
         // Send to backend
         const result = await api.detectImage(frameData);
@@ -207,16 +217,30 @@ export default {
           };
           img.src = result.annotated_image;
           
-          // Emit detections to parent
-          if (result.detections.length > 0) {
-            this.$emit('frame-detected', result.detections);
-          }
+          this.emitSessionPayload(result, frameData);
         }
       } catch (error) {
         console.error('Detection error:', error);
         this.stopDetection();
         alert('Detection failed. Please check if the backend is running.');
       }
+    },
+    generateSessionId() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    },
+    emitSessionPayload(result, frameData) {
+      const payload = {
+        sessionId: this.currentSessionId || this.generateSessionId(),
+        fileName: this.currentFileName || (this.isImage ? 'Image Upload' : 'Video Frame'),
+        timestamp: new Date().toISOString(),
+        sourceImage: frameData || this.lastSourceFrame,
+        annotatedImage: result.annotated_image,
+        detections: result.detections || [],
+      };
+      this.$emit('frame-detected', payload);
     },
     
     captureFrame() {

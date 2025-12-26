@@ -103,14 +103,14 @@ export default {
 
 <style scoped>
 .detection-panel {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
+  background: var(--color-surface);
+  border-radius: 18px;
   padding: 20px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   max-height: 600px;
+  box-shadow: 0 16px 30px rgba(3, 10, 20, 0.45);
 }
 
 .panel-header {
@@ -122,18 +122,18 @@ export default {
 
 .panel-title {
   margin: 0;
-  font-size: 1.3em;
-  color: #4CAF50;
+  font-size: 1.2em;
+  color: var(--accent-primary);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .detection-count {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
+  background: rgba(62, 213, 152, 0.15);
+  color: var(--accent-primary);
   padding: 5px 15px;
-  border-radius: 20px;
+  border-radius: 999px;
   font-weight: 600;
   font-size: 0.9em;
 }
@@ -169,14 +169,15 @@ export default {
 }
 
 .detection-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  background: var(--color-surface-soft);
+  border-radius: 12px;
   padding: 15px;
   display: flex;
   gap: 15px;
   border-left: 4px solid;
   transition: all 0.3s ease;
   cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .detection-item:hover {
@@ -185,15 +186,15 @@ export default {
 }
 
 .detection-item.soldier {
-  border-left-color: #f44336;
+  border-left-color: #ff7c6b;
 }
 
 .detection-item.civilian {
-  border-left-color: #2196F3;
+  border-left-color: #6fc3ff;
 }
 
 .detection-item.unknown {
-  border-left-color: #9E9E9E;
+  border-left-color: #b497ff;
 }
 
 .detection-icon {
@@ -221,8 +222,8 @@ export default {
 }
 
 .detection-confidence {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
+  background: rgba(62, 213, 152, 0.18);
+  color: var(--accent-primary);
   padding: 3px 10px;
   border-radius: 12px;
   font-size: 0.9em;
@@ -245,23 +246,24 @@ export default {
 }
 
 .confidence-badge.high {
-  background: rgba(76, 175, 80, 0.3);
-  color: #4CAF50;
+  background: rgba(62, 213, 152, 0.2);
+  color: var(--accent-primary);
 }
 
 .confidence-badge.medium {
-  background: rgba(255, 152, 0, 0.3);
-  color: #FF9800;
+  background: rgba(255, 200, 111, 0.25);
+  color: #ffbd63;
 }
 
 .confidence-badge.low {
-  background: rgba(244, 67, 54, 0.3);
-  color: #f44336;
+  background: rgba(255, 120, 120, 0.2);
+  color: #ff8080;
 }
+
 
 .confidence-bar {
   height: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 5px;
@@ -269,7 +271,7 @@ export default {
 
 .confidence-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4CAF50 0%, #81C784 100%);
+  background: linear-gradient(90deg, #3ed598 0%, #6fc3ff 100%);
   border-radius: 2px;
   transition: width 0.5s ease;
 }
