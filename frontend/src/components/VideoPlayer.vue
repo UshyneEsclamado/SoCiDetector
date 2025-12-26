@@ -93,6 +93,10 @@ export default {
       currentSessionId: null,
       currentFileName: '',
       lastSourceFrame: null,
+      targetFps: 3,
+      detectionIntervalMs: 333,
+      lastDetectionTimestamp: 0,
+      estimatedVideoFps: 30,
     };
   },
   mounted() {
@@ -100,6 +104,12 @@ export default {
     this.ctx = this.canvas.getContext('2d');
     this.video = document.createElement('video');
     this.video.muted = true;
+    this.video.addEventListener('ended', this.handleVideoEnded);
+  },
+  beforeUnmount() {
+    if (this.video) {
+      this.video.removeEventListener('ended', this.handleVideoEnded);
+    }
   },
   methods: {
     handleFileUpload(event) {
@@ -111,7 +121,8 @@ export default {
       this.currentSessionId = this.generateSessionId();
       this.currentFileName = file.name || (this.isImage ? 'Image Upload' : 'Video Upload');
       this.currentFrame = 0;
-      this.totalFrames = 0;
+      this.totalFrames = this.isImage ? 1 : 0;
+      this.lastDetectionTimestamp = 0;
 
       const url = URL.createObjectURL(file);
 
@@ -133,23 +144,26 @@ export default {
         };
         img.src = url;
       } else {
+        this.stopDetection();
+        this.video.pause();
         this.video.src = url;
         this.video.load();
-        
-        this.video.addEventListener('loadedmetadata', () => {
-          this.canvas.width = this.video.videoWidth;
-          this.canvas.height = this.video.videoHeight;
+        this.video.onloadedmetadata = () => {
+          this.canvas.width = this.video.videoWidth || this.canvas.width;
+          this.canvas.height = this.video.videoHeight || this.canvas.height;
           this.ctx.drawImage(this.video, 0, 0);
-          
+
           this.videoLoaded = true;
-          this.totalFrames = Math.floor(this.video.duration * 30); // Assume 30fps
+          const fallbackFps = 30;
+          this.estimatedVideoFps = fallbackFps;
+          this.totalFrames = Math.max(1, Math.floor(this.video.duration * this.estimatedVideoFps));
           this.videoInfo = {
             width: this.video.videoWidth,
             height: this.video.videoHeight,
             duration: this.video.duration,
           };
           this.lastSourceFrame = this.canvas.toDataURL('image/jpeg', 0.85);
-        });
+        };
       }
     },
     
@@ -161,38 +175,66 @@ export default {
 
       this.isProcessing = true;
       this.lastFrameTime = performance.now();
+      this.lastDetectionTimestamp = 0;
 
       if (this.isImage) {
         await this.processFrame();
+        this.currentFrame = 1;
         this.isProcessing = false;
       } else {
+        this.currentFrame = 0;
+        this.video.currentTime = 0;
         this.video.play();
-        this.processVideoFrames();
+        requestAnimationFrame(() => this.processVideoFrames());
       }
     },
     
-    stopDetection() {
+    stopDetection(resetPosition = false) {
       this.isProcessing = false;
       if (this.video) {
         this.video.pause();
+        if (resetPosition) {
+          this.video.currentTime = 0;
+        }
       }
     },
     
     async processVideoFrames() {
-      if (!this.isProcessing) return;
+      if (!this.isProcessing || !this.video) return;
+      if (this.video.ended) {
+        this.finishVideoProcessing();
+        return;
+      }
+
+      const now = performance.now();
+      if (now - this.lastDetectionTimestamp < this.detectionIntervalMs) {
+        requestAnimationFrame(() => this.processVideoFrames());
+        return;
+      }
+      this.lastDetectionTimestamp = now;
 
       await this.processFrame();
       
       // Calculate FPS
-      const now = performance.now();
       const elapsed = now - this.lastFrameTime;
-      this.fps = 1000 / elapsed;
-      this.lastFrameTime = now;
-      
-      this.currentFrame++;
-      
-      // Continue processing
-      requestAnimationFrame(() => this.processVideoFrames());
+      if (elapsed > 0) {
+        this.fps = 1000 / elapsed;
+      }
+      this.lastFrameTime = performance.now();
+
+      this.currentFrame = Math.min(
+        this.totalFrames || 0,
+        Math.max(1, Math.floor(this.video.currentTime * this.estimatedVideoFps))
+      );
+
+      if (this.video.ended) {
+        this.finishVideoProcessing();
+        return;
+      }
+
+      if (this.isProcessing) {
+        requestAnimationFrame(() => this.processVideoFrames());
+      }
     },
     
     async processFrame() {
@@ -225,6 +267,14 @@ export default {
         alert('Detection failed. Please check if the backend is running.');
       }
     },
+    handleVideoEnded() {
+      if (!this.isProcessing) return;
+      this.finishVideoProcessing();
+    },
+    finishVideoProcessing() {
+      this.stopDetection();
+      this.currentFrame = this.totalFrames;
+    },
     generateSessionId() {
       if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
@@ -239,6 +289,10 @@ export default {
         sourceImage: frameData || this.lastSourceFrame,
         annotatedImage: result.annotated_image,
         detections: result.detections || [],
+        frameNumber: this.currentFrame,
+        totalFrames: this.totalFrames,
+        isImage: this.isImage,
+        finished: !this.isProcessing && (!!this.isImage || this.video?.ended)
       };
       this.$emit('frame-detected', payload);
     },

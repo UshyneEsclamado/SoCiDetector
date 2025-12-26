@@ -95,7 +95,7 @@ function formatDate(value) {
 
 <style scoped>
 .history-panel {
-  background: var(--color-surface);
+  background: linear-gradient(135deg, rgba(19, 38, 69, 0.96), rgba(31, 59, 104, 0.95));
   border-radius: 18px;
   padding: 20px 22px;
   border: 1px solid var(--color-border);
@@ -122,11 +122,11 @@ function formatDate(value) {
 }
 
 .session-select {
-  background: var(--color-surface-soft);
-  border: 1px solid rgba(111, 195, 255, 0.5);
-  border-radius: 10px;
-  padding: 10px 14px;
-  color: var(--color-text);
+  background: rgba(11, 40, 74, 0.85);
+  border: 1px solid rgba(190, 227, 255, 0.7);
+  border-radius: 12px;
+  padding: 11px 16px;
+  color: #f7fbff;
   min-width: 240px;
   font-family: var(--font-base);
   font-size: 0.95rem;
@@ -139,8 +139,8 @@ function formatDate(value) {
 }
 
 .session-select option {
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: #152c4c;
+  color: #f7fbff;
 }
 
 .empty-state {
@@ -166,7 +166,7 @@ function formatDate(value) {
 }
 
 .preview-card {
-  background: var(--color-surface-soft);
+  background: rgba(17, 45, 84, 0.85);
   border-radius: 14px;
   padding: 12px;
   border: 1px solid rgba(111, 195, 255, 0.25);
@@ -183,14 +183,14 @@ function formatDate(value) {
 .preview-card img {
   width: 100%;
   border-radius: 10px;
-  border: 1px solid rgba(226, 239, 255, 0.35);
+  border: 1px solid rgba(247, 250, 255, 0.5);
 }
 
 .meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
-  background: var(--color-surface-soft);
+  background: rgba(17, 37, 66, 0.9);
   border-radius: 12px;
   padding: 12px;
 }

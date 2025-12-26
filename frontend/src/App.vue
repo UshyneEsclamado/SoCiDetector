@@ -13,6 +13,9 @@ const stats = ref({ total: 0, soldiers: 0, civilians: 0 })
 const sessionHistory = ref([])
 const selectedSessionId = ref('')
 
+const MAX_HISTORY = 20
+const MAX_DETECTIONS_PER_SESSION = 400
+
 async function refreshStatus() {
   try {
     const health = await api.checkHealth()
@@ -25,38 +28,54 @@ async function refreshStatus() {
   }
 }
 
-function onFrameDetected(sessionPayload) {
-  if (!sessionPayload) return
-  const normalizedDetections = (sessionPayload.detections || []).map((d, idx) => ({
-    id: `${sessionPayload.sessionId}-${idx}`,
+function onFrameDetected(payload) {
+  if (!payload) return
+  const normalizedDetections = (payload.detections || []).map((d, idx) => ({
+    id: `${payload.sessionId}-${payload.frameNumber ?? 0}-${Date.now()}-${idx}`,
+    frameNumber: payload.frameNumber ?? 0,
     ...d
   }))
 
-  const session = {
-    id: sessionPayload.sessionId,
-    fileName: sessionPayload.fileName,
-    timestamp: sessionPayload.timestamp,
-    sourceImage: sessionPayload.sourceImage,
-    annotatedImage: sessionPayload.annotatedImage,
-    detections: normalizedDetections
-  }
-
-  const existingIndex = sessionHistory.value.findIndex(s => s.id === session.id)
+  const existingIndex = sessionHistory.value.findIndex(s => s.id === payload.sessionId)
+  let nextSession
   if (existingIndex !== -1) {
+    const existing = { ...sessionHistory.value[existingIndex] }
+    existing.detections = [...normalizedDetections, ...existing.detections].slice(0, MAX_DETECTIONS_PER_SESSION)
+    existing.annotatedImage = payload.annotatedImage
+    existing.sourceImage = payload.sourceImage
+    existing.timestamp = payload.timestamp
+    existing.lastFrame = payload.frameNumber ?? existing.lastFrame
+    existing.totalFrames = payload.totalFrames ?? existing.totalFrames
+    nextSession = existing
     sessionHistory.value.splice(existingIndex, 1)
+  } else {
+    nextSession = {
+      id: payload.sessionId,
+      fileName: payload.fileName,
+      timestamp: payload.timestamp,
+      sourceImage: payload.sourceImage,
+      annotatedImage: payload.annotatedImage,
+      detections: normalizedDetections,
+      lastFrame: payload.frameNumber ?? 0,
+      totalFrames: payload.totalFrames ?? 0
+    }
   }
-  sessionHistory.value = [session, ...sessionHistory.value].slice(0, 20)
-  selectSession(session.id)
+  sessionHistory.value = [nextSession, ...sessionHistory.value].slice(0, MAX_HISTORY)
+
+  const shouldAutoSelect = !selectedSessionId.value || selectedSessionId.value === nextSession.id
+  if (shouldAutoSelect) {
+    selectSession(nextSession.id, nextSession)
+  }
 }
 
-function selectSession(sessionId) {
+function selectSession(sessionId, seededSession) {
   if (!sessionId) {
     selectedSessionId.value = ''
     applyDetections([])
     return
   }
   selectedSessionId.value = sessionId
-  const session = sessionHistory.value.find(s => s.id === sessionId)
+  const session = seededSession || sessionHistory.value.find(s => s.id === sessionId)
   applyDetections(session ? session.detections : [])
 }
 

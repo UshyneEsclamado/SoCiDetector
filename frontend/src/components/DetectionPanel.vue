@@ -103,7 +103,7 @@ export default {
 
 <style scoped>
 .detection-panel {
-  background: var(--color-surface);
+  background: linear-gradient(135deg, rgba(16, 36, 66, 0.95), rgba(13, 29, 54, 0.92));
   border-radius: 18px;
   padding: 20px;
   border: 1px solid var(--color-border);
@@ -169,7 +169,7 @@ export default {
 }
 
 .detection-item {
-  background: var(--color-surface-soft);
+  background: rgba(21, 48, 84, 0.85);
   border-radius: 12px;
   padding: 15px;
   display: flex;
