@@ -77,6 +77,7 @@ export default {
       default: false,
     },
   },
+  emits: ['frame-detected', 'session-started'],
   data() {
     return {
       video: null,
@@ -123,6 +124,11 @@ export default {
       this.currentFrame = 0;
       this.totalFrames = this.isImage ? 1 : 0;
       this.lastDetectionTimestamp = 0;
+
+      this.$emit('session-started', {
+        sessionId: this.currentSessionId,
+        fileName: this.currentFileName,
+      });
 
       const url = URL.createObjectURL(file);
 

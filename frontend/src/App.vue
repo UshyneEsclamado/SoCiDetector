@@ -87,6 +87,11 @@ function applyDetections(list) {
   stats.value = { total, soldiers, civilians }
 }
 
+function handleSessionStarted(payload = {}) {
+  selectedSessionId.value = payload.sessionId || ''
+  applyDetections([])
+}
+
 onMounted(() => {
   refreshStatus()
 })
@@ -97,7 +102,11 @@ onMounted(() => {
     <Header :backend-status="backendStatus" @refresh-status="refreshStatus" />
     <main class="content">
       <section class="left">
-        <VideoPlayer :backend-connected="backendStatus.connected" @frame-detected="onFrameDetected" />
+        <VideoPlayer
+          :backend-connected="backendStatus.connected"
+          @frame-detected="onFrameDetected"
+          @session-started="handleSessionStarted"
+        />
       </section>
       <section class="right">
         <ResultHistory

@@ -88,6 +88,8 @@ export default {
   padding: 20px 30px;
   border-bottom: 2px solid rgba(76, 175, 80, 0.3);
   backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 50;
 }
 
 .header-content {
@@ -194,6 +196,12 @@ export default {
   font-size: 0.9em;
   font-weight: 600;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  white-space: nowrap;
 }
 
 .info-button:hover {
@@ -208,11 +216,11 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+  display: grid;
+  place-items: center;
+  z-index: 2000;
   backdrop-filter: blur(5px);
+  padding: 20px;
 }
 
 .info-content {
