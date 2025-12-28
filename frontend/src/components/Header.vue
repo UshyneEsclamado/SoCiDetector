@@ -4,7 +4,7 @@
       <div class="logo-section">
         <div class="logo-icon">🛡️</div>
         <div class="title-section">
-          <h1>SkyGuardian AI</h1>
+          <h1>SkyGuardian</h1>
           <p class="subtitle">Aerial Threat Detection & Classification System</p>
         </div>
       </div>
