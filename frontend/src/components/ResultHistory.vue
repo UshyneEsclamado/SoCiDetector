@@ -24,11 +24,27 @@
 
     <div v-else-if="selectedSession" class="preview-section">
       <div class="image-grid">
-        <div class="preview-card">
+        <div
+          class="preview-card"
+          role="button"
+          tabindex="0"
+          title="Click to view larger preview"
+          @click="openModal"
+          @keydown.enter.prevent="openModal"
+          @keydown.space.prevent="openModal"
+        >
           <h4>Uploaded Frame</h4>
           <img :src="selectedSession.sourceImage" alt="Uploaded frame" />
         </div>
-        <div class="preview-card">
+        <div
+          class="preview-card"
+          role="button"
+          tabindex="0"
+          title="Click to view larger preview"
+          @click="openModal"
+          @keydown.enter.prevent="openModal"
+          @keydown.space.prevent="openModal"
+        >
           <h4>Annotated Result</h4>
           <img :src="selectedSession.annotatedImage" alt="Annotated frame" />
         </div>
@@ -49,11 +65,40 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="isModalOpen && selectedSession"
+      class="modal-overlay"
+      @click.self="closeModal"
+    >
+      <div class="modal-window" tabindex="-1">
+        <button class="modal-close" type="button" aria-label="Close enlarged preview" @click="closeModal">
+          ×
+        </button>
+        <div class="modal-header">
+          <div>
+            <h4>{{ selectedSession.fileName }}</h4>
+            <p>{{ formatDate(selectedSession.timestamp) }}</p>
+          </div>
+          <span class="modal-badge">{{ selectedSession.detections.length }} detections</span>
+        </div>
+        <div class="modal-image-grid">
+          <div class="modal-card">
+            <h5>Uploaded Frame</h5>
+            <img :src="selectedSession.sourceImage" alt="Uploaded frame enlarged" />
+          </div>
+          <div class="modal-card">
+            <h5>Annotated Result</h5>
+            <img :src="selectedSession.annotatedImage" alt="Annotated frame enlarged" />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   sessions: {
@@ -68,6 +113,7 @@ const props = defineProps({
 
 const emit = defineEmits(['select-session'])
 const localSelected = ref(props.selectedId || '')
+const isModalOpen = ref(false)
 
 watch(() => props.selectedId, (val) => {
   localSelected.value = val || ''
@@ -82,6 +128,15 @@ function handleSelect() {
   emit('select-session', localSelected.value)
 }
 
+function openModal() {
+  if (!selectedSession.value) return
+  isModalOpen.value = true
+}
+
+function closeModal() {
+  isModalOpen.value = false
+}
+
 function formatLabel(session) {
   return `${session.fileName || 'Session'} • ${formatDate(session.timestamp)}`
 }
@@ -91,6 +146,14 @@ function formatDate(value) {
   const date = new Date(value)
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
 }
+
+watch(isModalOpen, (val) => {
+  document.body.style.overflow = val ? 'hidden' : ''
+})
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>
@@ -206,5 +269,99 @@ function formatDate(value) {
   margin: 4px 0 0;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 18, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  padding: 24px;
+}
+
+.modal-window {
+  position: relative;
+  width: min(1100px, 100%);
+  background: linear-gradient(145deg, rgba(15, 40, 74, 0.98), rgba(9, 24, 45, 0.98));
+  border-radius: 20px;
+  border: 1px solid rgba(111, 195, 255, 0.25);
+  padding: 28px;
+  box-shadow: 0 35px 80px rgba(0, 0, 0, 0.55);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7fbff;
+  font-size: 1.6rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.modal-header p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+}
+
+.modal-badge {
+  background: rgba(62, 213, 152, 0.15);
+  color: var(--accent-primary);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.modal-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.modal-card {
+  background: rgba(10, 26, 48, 0.7);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-card h5 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.modal-card img {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(247, 250, 255, 0.4);
 }
 </style>
